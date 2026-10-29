@@ -139,6 +139,8 @@ function App() {
       cargarCarga();
     })
     .catch(err => {console.error("Error al guardar:", err)
+      cargarCatalogo();
+      cargarCarga();
         setErrorMensaje(err.message); 
 
     });
@@ -182,7 +184,46 @@ function App() {
       cargarCarga();
     })
     .catch(err => {
+       cargarCatalogo();
+      cargarCarga();
+      setErrorMensaje(err.message); 
+     
+ 
 
+    });
+  };
+
+
+  const endpoint5 = (selectedItem) => {
+    setErrorMensaje(null);
+   
+    const selectedId = selectedItem.id || selectedItem._id;
+    console.log(selectedId)
+
+     // This line seems out of place and may cause an error. Consider removing it.
+    fetch(`${API_URL}/inventario/carga/${selectedId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(res => {
+
+      if (!res.ok) {
+        // Intentamos leer el mensaje que envía tu backend en formato JSON si existe
+        return res.json().then(errData => {
+          console.log("Error al actualizar la carga:", errData);
+          throw new Error(errData.mensaje || errData.error || "Error al actualizar la carga.");
+        });
+      }
+      return res.json();
+
+    })
+    .then(() => {
+      cargarCatalogo();
+      cargarCarga();
+    })
+    .catch(err => {
+     cargarCatalogo();
+      cargarCarga();
       setErrorMensaje(err.message); 
      
  
@@ -233,7 +274,7 @@ function App() {
                       <div className="text-muted small">Cant: {item.cantidad }</div>
                     </div>
                     <Badge color="primary" pill>
-                      {item.precio * (item.cantidad || 1)} Cr
+                      {suministro.precio * (item.cantidad)} Cr
                     </Badge>
                      <ButtonGroup size="sm">
                         <Button 
@@ -247,6 +288,13 @@ function App() {
                           onClick={() => {sumarORestarReserva(item,"-")}}
                         >
                           -
+                        </Button>
+
+                        <Button color="danger"  size="sm"
+                        
+                          onClick={() => {endpoint5(item)}}
+                        >
+                          Desembarcar
                         </Button>
                     </ButtonGroup>
                   </ListGroupItem>
