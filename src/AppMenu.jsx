@@ -1,16 +1,16 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Ej1 from './AppEJ1'; // Asegúrate de ajustar la ruta si están en otra carpeta
-import Ej2 from './App';
+import Ej2 from './AppEJ2';
 
 function App() {
   return (
     <BrowserRouter>
       <nav style={styles.nav}>
-        <h3 style={{ margin: 0 }}>Panel de Control</h3>
+        <h3 style={{ margin: 0 }}>Seleccion</h3>
         <div style={styles.linksContainer}>
           {/* Links que cambian la URL sin recargar la página */}
-          <Link to="/ejercicio1" style={styles.link}>Ir a Ejercicio 1</Link>
-          <Link to="/ejercicio2" style={styles.link}>Ir a Ejercicio 2</Link>
+          <Link to="/ejercicio1" style={styles.link}>EJ 1</Link>
+          <Link to="/ejercicio2" style={styles.link}>EJ 2</Link>
         </div>
       </nav>
 
