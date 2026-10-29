@@ -242,6 +242,7 @@ function App() {
       </UncontrolledAlert>
     )}
 
+
       <Navbar color="light" light expand="md">
         <Nav className="ms-auto" navbar> 
           <NavItem className="ml-auto">
