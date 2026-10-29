@@ -16,7 +16,8 @@ import {
   Button,
   ButtonGroup,
   ListGroup,
-  ListGroupItem
+  ListGroupItem,
+  UncontrolledAlert
 
 } from 'reactstrap';
 
@@ -72,6 +73,7 @@ function App() {
   const [costoTotal, setCostoTotal] = useState(0);
   const [reservas, setReservas] = useState([]);
   const [suministros, setSuministros] = useState([]);
+  const [errorMensaje, setErrorMensaje] = useState(null);
 
   const API_URL = 'http://localhost:3000/api';
 
@@ -91,7 +93,13 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data && data.creditos) setCreditos(data.creditos);
-        if (data && data.precioTotal) setCostoTotal(data.precioTotal);
+        if (data && data.precioTotal){
+            setCostoTotal(data.precioTotal);
+        }else{
+            setCostoTotal(0);
+        }
+          
+          
         if (data && data.items) setReservas(data.items);
       })
       .catch(err => console.error("Error cargando créditos/costos:", err));
@@ -104,7 +112,6 @@ function App() {
 
 
 
-  // CORRECCIÓN AQUÍ: Añadida la lógica para disminuir el número de stock en la interfaz
     const test = (selectedItem) => {
     const selectedId = selectedItem.id || selectedItem._id;
 
@@ -117,17 +124,83 @@ function App() {
         cantidad: 1 
        })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) {
+        // Intentamos leer el mensaje que envía tu backend en formato JSON si existe
+        return res.json().then(errData => {
+          console.log("Error al actualizar la carga:", errData);
+          throw new Error(errData.mensaje || errData.error || "Error al actualizar la carga.");
+        });
+      }
+      return res.json();
+    })
     .then(() => {
       cargarCatalogo();
       cargarCarga();
     })
-    .catch(err => console.error("Error al guardar:", err));
+    .catch(err => {console.error("Error al guardar:", err)
+        setErrorMensaje(err.message); 
+
+    });
+  };
+
+  const sumarORestarReserva = (selectedItem,action) => {
+    setErrorMensaje(null);
+    console.log(selectedItem, action);
+    let modificacion = 0
+    if(action === "+"){
+      modificacion = 1;
+    } else if(action === "-"){
+      modificacion = -1;
+    }
+    selectedItem.cantidad = Math.max(0, selectedItem.cantidad + modificacion);
+    const selectedId = selectedItem.id || selectedItem._id;
+    console.log(selectedId)
+
+     // This line seems out of place and may cause an error. Consider removing it.
+    fetch(`${API_URL}/inventario/carga/${selectedId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        cantidad: selectedItem.cantidad 
+       })
+    })
+    .then(res => {
+
+      if (!res.ok) {
+        // Intentamos leer el mensaje que envía tu backend en formato JSON si existe
+        return res.json().then(errData => {
+          console.log("Error al actualizar la carga:", errData);
+          throw new Error(errData.mensaje || errData.error || "Error al actualizar la carga.");
+        });
+      }
+      return res.json();
+
+    })
+    .then(() => {
+      cargarCatalogo();
+      cargarCarga();
+    })
+    .catch(err => {
+
+      setErrorMensaje(err.message); 
+     
+ 
+
+    });
   };
 
 
   return (
+        
     <Container>
+      {/* Si existe un mensaje de error, se muestra el UncontrolledAlert automáticamente */}
+    {errorMensaje && (
+      <UncontrolledAlert color="warning">
+        <strong>¡Atención!</strong> {errorMensaje}
+      </UncontrolledAlert>
+    )}
+
       <Navbar color="light" light expand="md">
         <Nav className="ms-auto" navbar> 
           <NavItem className="ml-auto">
@@ -152,19 +225,33 @@ function App() {
                   La nave está vacía. Añade suministros.
                 </ListGroupItem>
               ) : (
-                reservas.map((item, index) => (
+                reservas.map((item, index) => { const suministro = suministros.find(s => s.id == item.id); return suministro ? (
                   
                   <ListGroupItem key={item.id || index} className="d-flex justify-content-between align-items-center">
                     <div>
-                      <strong>{item.nombre}</strong>
-                      <div className="text-muted small">Cant: {item.cantidad || 1}</div>
+                      <strong>{suministro.nombre}</strong>
+                      <div className="text-muted small">Cant: {item.cantidad }</div>
                     </div>
                     <Badge color="primary" pill>
                       {item.precio * (item.cantidad || 1)} Cr
                     </Badge>
+                     <ButtonGroup size="sm">
+                        <Button 
+                        
+                          onClick={() => {sumarORestarReserva(item,"+")}}
+                        >
+                          +
+                        </Button>
+                        <Button 
+                        
+                          onClick={() => {sumarORestarReserva(item,"-")}}
+                        >
+                          -
+                        </Button>
+                    </ButtonGroup>
                   </ListGroupItem>
-                ))
-              )}
+                ) : null }))
+              }
             </ListGroup>
     </Container>
   );
